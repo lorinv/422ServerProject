@@ -1,0 +1,326 @@
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Net.Sockets;
+using System.Text;
+using System.Threading.Tasks;
+
+/*
+ *OK: Found type CS422.ConcatStreamOK: Found type CS422.NoSeekMemoryStreamSuccess: Stream length is positive and seek to beginning okFailure: Failed to read exactly 653985 bytes from stream of length 653985 bytesSuccess: Verifed that stream passed to seek/read/write test function returns true for CanSeek, CanRead, and CanWrite.Failure: Stream length went from 653985 to 653985 after writing 10000000 bytes 
+*/
+
+namespace CS422
+{
+    class ConcatStreamUnitTests
+    {
+        public static object Assert { get; private set; }
+
+        //Constructor 1 Tests
+        static public bool Test()
+        {
+            //int BUFFER_SIZE = 8000;
+            //string testFilePath = "testFile1.txt";
+            //byte[] buffer = new byte[BUFFER_SIZE];
+            //NoSeekMemoryStream noSeekMemoryStream = new NoSeekMemoryStream(buffer);
+            //FileStream fileStream = new FileStream(testFilePath, FileMode.Append);
+            canWriteTest();
+            canReadTest();
+            LengthTest();
+            ReadStreamTests();
+            //Write Testing
+            //Seek Testing
+            //Close Testing            
+
+            return true;
+        }
+        
+        static bool ReadStreamTests()
+        {
+            Console.WriteLine("\nTesting Read Functionality:");
+            
+            Console.Write("\tTesting reading all content from both streams (FileStream, FileStream): ");
+            FileStream fs1 = new FileStream("testFile1.txt", FileMode.Open, FileAccess.Read);
+            byte[] buffer1 = new byte[fs1.Length];
+            int bytesRead = fs1.Read(buffer1, 0, buffer1.Length);
+            string msg1 = System.Text.Encoding.ASCII.GetString(buffer1, 0, bytesRead);            
+
+            FileStream fs2 = new FileStream("testFile1.txt", FileMode.Open, FileAccess.Read);
+            byte[] buffer2 = new byte[fs1.Length];
+            bytesRead = fs2.Read(buffer2, 0, buffer2.Length);
+            string msg2 = System.Text.Encoding.ASCII.GetString(buffer2, 0, bytesRead);
+
+            ConcatStream cs1 = new ConcatStream(fs1, fs2);
+            byte[] buffer3 = new byte[cs1.Length];
+            bytesRead = cs1.Read(buffer3, 0, buffer3.Length);
+            string msg3 = System.Text.Encoding.ASCII.GetString(buffer3, 0, bytesRead);
+            if (msg3 != msg1 + msg2) Console.WriteLine("FAILED");
+            else Console.WriteLine("SUCCESS");
+
+            fs1.Close();
+            fs2.Close();
+            cs1.Close();
+
+            /*********************************/
+
+            Console.Write("\tTesting if position resets when stream is passed to CS: ");
+            fs1 = new FileStream("testFile1.txt", FileMode.Open, FileAccess.Read);
+            int amountToRead = 10;
+            buffer1 = new byte[amountToRead];
+            bytesRead = fs1.Read(buffer1, 0, buffer1.Length);
+            msg1 = System.Text.Encoding.ASCII.GetString(buffer1, 0, bytesRead);
+
+            fs2 = new FileStream("testFile1.txt", FileMode.Open, FileAccess.Read);
+            buffer2 = new byte[amountToRead];
+            bytesRead = fs2.Read(buffer2, 0, buffer2.Length);
+            msg2 = System.Text.Encoding.ASCII.GetString(buffer2, 0, bytesRead);
+
+            cs1 = new ConcatStream(fs1, fs2);
+            buffer3 = new byte[amountToRead];
+            bytesRead = cs1.Read(buffer3, 0, buffer3.Length);
+            msg3 = System.Text.Encoding.ASCII.GetString(buffer3, 0, bytesRead);
+            if (msg3 != msg1 || msg3 != msg2) Console.WriteLine("FAILED");
+            else Console.WriteLine("SUCCESS");
+
+            fs1.Close();
+            fs2.Close();
+            cs1.Close();
+
+            /*********************************************************************/
+
+            Console.Write("\tTesting reading from stream no length property (FileStream, NetworkStream): ");
+            string urlAddress = "https://www.facebook.com";
+            HttpWebRequest request = (HttpWebRequest)System.Net.WebRequest.Create(urlAddress);
+            HttpWebResponse response = (HttpWebResponse)request.GetResponse();            
+            fs2 = new FileStream("testFile1.txt", FileMode.Open, FileAccess.Read);
+            byte[] buffer = new byte[fs2.Length + 2];
+            if (response.StatusCode == HttpStatusCode.OK)
+            {
+                Stream receiveStream = response.GetResponseStream();
+                cs1 = new ConcatStream(fs2, receiveStream);
+                bytesRead = cs1.Read(buffer, 0, buffer.Length);
+                msg1 = System.Text.Encoding.ASCII.GetString(buffer, 0, bytesRead);
+                if (msg1.Length > fs2.Length + 1) Console.WriteLine("SUCCESS");
+                else { Console.WriteLine("FAILED"); }
+                Console.WriteLine(bytesRead.ToString());
+                Console.WriteLine(fs2.Length.ToString());
+            }
+            else
+            {
+                Console.Write("!!!!!!!!!!!!!!!!!!!SOCKET CONNNECTION FAILED, cannot run test.");
+                throw new ArgumentException();
+            }
+                return true;
+            
+        }
+
+        static public bool canWriteTest()
+        {
+            bool val = true;
+
+            FileStream fs1 = new FileStream("testFile1.txt", FileMode.Open, FileAccess.Read);
+            FileStream fs2 = new FileStream("testFile1.txt", FileMode.Open, FileAccess.Read);
+            FileStream fs3 = new FileStream("testFile2.txt", FileMode.Create, FileAccess.ReadWrite);
+            FileStream fs4 = new FileStream("testFile3.txt", FileMode.Create, FileAccess.ReadWrite);
+
+            ConcatStream cs1 = new ConcatStream(fs1, fs2);
+            ConcatStream cs2 = new ConcatStream(fs1, fs3);
+            ConcatStream cs3 = new ConcatStream(fs3, fs4);            
+                        
+            if (cs1.CanWrite) { Console.Out.WriteLine("CanWrite failed - 1 readonly, 1 read/write. Expected Output: False | Output: True "); val = false; }
+            if (cs2.CanWrite) { Console.Out.WriteLine("CanWrite failed - 1 readonly, 1 read/write. Expected Output: False | Output: True "); val = false; }
+            if (!cs3.CanWrite) { Console.Out.WriteLine("CanWrite failed - 2 read/write. Expected Output: True | Output: False "); val = false; }
+
+            try
+            {
+                string testString = "New String";
+                byte[] toBytes = Encoding.ASCII.GetBytes(testString);
+                cs1.Write(toBytes, 0, toBytes.Length);
+                Console.WriteLine("2 readonly streams : Write to a readonly Concatstream succeeded | Expected Output: Fail");
+                val = false;
+            }
+            catch { };
+            try
+            {
+                string testString = "New String";
+                byte[] toBytes = Encoding.ASCII.GetBytes(testString);
+                cs2.Write(toBytes, 0, toBytes.Length);                
+                Console.WriteLine("1 readonly, 1 readWrite stream : Write to Concatstream succeeded | Expected Output: Fail");
+                val = false;
+            }
+            catch { };
+            try
+            {
+                string testString = "New String";
+                byte[] toBytes = Encoding.ASCII.GetBytes(testString);
+                cs3.Write(toBytes, 0, toBytes.Length);                
+            }
+            catch
+            {
+                Console.WriteLine("2 readWrite stream : Write to Concatstream failed | Expected Output: Success");
+                val = false;
+            };
+
+            fs1.Close();
+            fs2.Close();
+            fs3.Close();
+            fs4.Close();
+
+            return val;
+        }
+
+        static public bool canReadTest()
+        {
+            bool val = true;
+            FileStream fs1 = new FileStream("testFile1.txt", FileMode.Open, FileAccess.Read);
+            FileStream fs2 = new FileStream("testFile1.txt", FileMode.Open, FileAccess.Read);
+            FileStream fs3 = new FileStream("testFile2.txt", FileMode.Open, FileAccess.Write);
+            ConcatStream cs1 = new ConcatStream(fs1, fs2);
+            ConcatStream cs2 = new ConcatStream(fs2, fs3);
+            if (!cs1.CanRead) { Console.Out.WriteLine("CanRead failed - 2 readonly. Expected Output: True | Output: False "); val = false; }
+            if (cs2.CanRead) { Console.Out.WriteLine("CanRead failed - 1 readonly, 1 write only. Expected Output: false | Output: true "); val = false; }
+            
+            try
+            {
+                byte[] toBytes = new byte[8000];
+                cs1.Read(toBytes, 0, toBytes.Length);
+            }
+            catch
+            {
+                Console.WriteLine("2 readonly stream : Read from Concatstream failed | Expected Output: Success");
+                val = false;
+            };
+            try
+            {
+                byte[] toBytes = new byte[8000];
+                cs2.Read(toBytes, 0, toBytes.Length);
+                Console.WriteLine("1 readonly, 1 Write stream : Read from Concatstream succeeded | Expected Output: Fail");
+                val = false;
+            }
+            catch { };
+
+            fs1.Close();
+            fs2.Close();
+            fs3.Close();
+
+            return val;
+        }
+        
+        static public bool LengthTest()
+        {
+            Console.WriteLine("\nChecking Length Property: ");
+            string urlAddress = "https://www.facebook.com";
+            HttpWebRequest request = (HttpWebRequest)System.Net.WebRequest.Create(urlAddress);
+            HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+            byte[] buffer = new byte[8000];
+            if (response.StatusCode == HttpStatusCode.OK)
+            {
+                Stream receiveStream = response.GetResponseStream();
+                Stream receiveStream2 = response.GetResponseStream();
+                FileStream fs3 = new FileStream("testFile2.txt", FileMode.Open, FileAccess.Write);
+                try
+                {
+                    ConcatStream cs = new ConcatStream(receiveStream, receiveStream2);
+                    Console.WriteLine("Stream1 with no Length instantiated. Argument Expection Expected");
+                    return false;
+                }
+                catch { }                
+                try
+                {
+                    Console.Write("\tValid Instantiation of ConcatStream: (filestream, networkStream): ");                    
+                    ConcatStream cs = new ConcatStream(fs3, receiveStream2);
+                    Console.WriteLine("SUCCESS");
+                }
+                catch
+                {
+                    Console.WriteLine("FAILED");
+                }
+                try
+                {
+                    Console.Write("\tAccessing the Length property when not available. (filestream, networkStream): ");
+                    ConcatStream cs = new ConcatStream(fs3, receiveStream2);
+                    long length = cs.Length;
+                    Console.WriteLine("FAILED");
+                    return false;
+                }
+                catch { Console.WriteLine("SUCCESS"); }
+                try
+                {
+                    Console.Write("\tAccessing and checking length of valid fixed length constructor: ");
+                    ConcatStream cs = new ConcatStream(fs3, receiveStream2, fs3.Length + 20);
+                    long length = cs.Length;
+                    if (length != fs3.Length + 20)
+                    {
+                        Console.WriteLine("FAILED");
+                        return false;
+                    }
+                    Console.WriteLine("SUCCESS");
+                }
+                catch
+                {
+                    Console.WriteLine("FAILED");
+                    return false;
+                }
+
+                try
+                {
+                    Console.Write("\tFixed Length Constructor, stream1 with no length: ");
+                    ConcatStream cs = new ConcatStream(receiveStream, receiveStream2, fs3.Length + 20);
+                    Console.Write("FAILED");                    
+                    return false;
+                }
+                catch
+                {
+                    Console.WriteLine("SUCCESS");
+                }
+                try
+                {
+                    Console.Write("\tTesting Negative Length Exception for Fixed Length Construct (FileStream, NetworkStream): ");
+                    ConcatStream cs = new ConcatStream(fs3, receiveStream2, -10);
+                    Console.WriteLine("FAILED");
+                }
+                catch
+                {
+                    Console.WriteLine("SUCCESS");
+                }
+                try
+                {
+                    Console.Write("\tTesting Exception for null second stream: ");
+                    ConcatStream cs = new ConcatStream(fs3, null);
+                    Console.WriteLine("FAILED");
+                }
+                catch
+                {
+                    Console.WriteLine("SUCCESS");
+                }
+                try
+                {
+                    Console.Write("\tTesting Exception for null first stream: ");
+                    ConcatStream cs = new ConcatStream(fs3, null);
+                    Console.WriteLine("FAILED");
+                }
+                catch
+                {
+                    Console.WriteLine("SUCCESS");
+                }
+
+                fs3.Close();
+                // int bytesRead = receiveStream.Read(buffer, 0, buffer.Length);
+                // string msg = System.Text.Encoding.ASCII.GetString(buffer, 0, bytesRead);                
+            }            
+            return true;
+        }
+
+
+
+        /*Where I LEFT OFF:
+         * Change some source code to make sure tests are working
+         * Finish changing all the tests into the new FAILED/SUCCESS FORMAT
+         * CONTINUE WRITING LENGTH TESTS
+         * Write other tests
+        */
+
+
+    }
+}

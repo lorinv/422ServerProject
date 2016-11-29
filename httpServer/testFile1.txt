@@ -1,0 +1,33 @@
+﻿Test - Both read and write functions must throw an
+ exception if either of the two streams do not support that action.
+	- How to test for read? Build a simple inherited Stream that we can turn
+	different properties on and off. Modify the noSeekMemStream
+
+CS should only support the "Length" property if both streams have the length
+Test - If both have a length, return the total length, else throw an exception
+
+Test - An exception should be thrown if the first stream does not support length 
+	for either constructor.
+
+Test - If second stream doesn't support seeking or have a length, like a network
+	stream, have it provde forward-only reading and writing functionality with 
+	no seeking
+
+Test - If the second constructor is used, have the CS support the length property
+even if the second stream doesn't have it. Return the passed parameter instead.
+
+Test - Make sure all the stream positions (first, second, and CS) are at zero
+	when constructded. If the second stream doesn't support seeking, assume
+	it is at position 0;
+
+Test - Make sure writing doesn't expand the first stream, but flows into the second.
+	If the 2nd parmeter was used, you should not expand. If you can't complete the 
+	writing, throw an exception.
+	**Something about position
+
+Test - Read the seeking documentation to implement all other cases of seeking
+	Stream must support seeking properly through use of both the Position property
+	and Seek function
+
+Test - Write more to the stream than the length allows OR the fixed length specified.
+
