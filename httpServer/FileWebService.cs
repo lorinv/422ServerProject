@@ -64,7 +64,7 @@ namespace CS422
             for (int i = 1; i < pieces.Length - 1; i++)
             {
                 piece = pieces[i];
-                if (piece.Contains("%20")) piece = piece.Replace("%20", " ");
+                //if (piece.Contains("%20")) piece = piece.Replace("%20", " ");
                 dir = dir.GetDir(piece);
 
                 //Check if directory exists
@@ -78,7 +78,7 @@ namespace CS422
 
             //Check if the last part is a file or a directory
             piece = pieces[pieces.Length - 1];
-            if (piece.Contains("%20")) piece = piece.Replace("%20", " ");            
+            //if (piece.Contains("%20")) piece = piece.Replace("%20", " ");            
             File422 file = dir.GetFile(piece); //TODO: This is returning Null and is not supposed to.
             if (file == null && req.Method == "PUT")
             {
@@ -95,7 +95,7 @@ namespace CS422
             else
             {
                 piece = pieces[pieces.Length - 1];
-                if (piece.Contains("%20")) piece = piece.Replace("%20", " ");
+                //if (piece.Contains("%20")) piece = piece.Replace("%20", " ");
                 if (piece != "")
                     dir = dir.GetDir(piece);
 
@@ -158,13 +158,21 @@ function selectedFileChanged(fileInput, urlPrefix)
             }
 
             foreach (Dir422 directory in dir.GetDirs())
-            {       
-                html.AppendFormat("<a href=\'{0}\'>{1}</a><br>", GetHREF(dir, true) + "/" + directory.Name, directory.Name);                 
+            {
+                string path = GetHREF(dir, true) + "/" + directory.Name;
+                string name = directory.Name;
+                name = name.Replace("%20", " ");
+                path = path.Replace("%20", " ");
+                html.AppendFormat("<a href=\'{0}\'>{1}</a><br>", path, name);                 
             }
             html.Append("<br><br><h1>Files</h1>");
             foreach (File422 file in dir.GetFiles())
             {
-                html.AppendFormat("<a href=\"{0}\">{1}</a><br>", GetHREF(dir, true) + "/" + file.Name, file.Name);                 
+                string path = GetHREF(dir, true) + "/" + file.Name;
+                string name = file.Name;
+                name = name.Replace("%20", " ");
+                path = path.Replace("%20", " ");
+                html.AppendFormat("<a href=\"{0}\">{1}</a><br>", path, name);                 
             }
             // If uploading is allowed, put the uploader at the bottom
             if (m_allowUploads)
