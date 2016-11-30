@@ -6,10 +6,12 @@ namespace CS422
     internal class FilesWebService : WebService
     {
         private readonly FileSys422 _fs;
+        private bool m_allowUploads;
 
         public FilesWebService(FileSys422 fs)
         {
             _fs = fs;
+            m_allowUploads = true;
         }
     
         public override void Handler(WebRequest req)
@@ -75,17 +77,83 @@ namespace CS422
         {
             var html = new System.Text.StringBuilder("<html><h1>Folders</h1>");
 
+            // Build an HTML file listing            
+            // We'll need a bit of script if uploading is allowed
+            if (m_allowUploads)
+            {
+                html.AppendLine(
+               @"<script>
+function selectedFileChanged(fileInput, urlPrefix)
+{
+ document.getElementById('uploadHdr').innerText = 'Uploading ' + fileInput.files[0].name + '...';
+ // Need XMLHttpRequest to do the upload
+ if (!window.XMLHttpRequest)
+ {
+ alert('Your browser does not support XMLHttpRequest. Please update your browser.');
+ return;
+ }
+ // Hide the file selection controls while we upload
+ var uploadControl = document.getElementById('uploader');
+ if (uploadControl)
+ {
+ uploadControl.style.visibility = 'hidden';
+ }
+ // Build a URL for the request
+ if (urlPrefix.lastIndexOf('/') != urlPrefix.length - 1)
+ {
+ urlPrefix += '/';
+ }
+
+ var uploadURL = urlPrefix + fileInput.files[0].name;
+ // Create the service request object
+ var req = new XMLHttpRequest();
+ req.open('PUT', uploadURL);
+ req.onreadystatechange = function()
+ {
+ document.getElementById('uploadHdr').innerText = 'Upload (request status == ' + req.status + ')';
+ };
+ req.send(fileInput.files[0]);
+}
+</script>
+");
+            }
+
             foreach (Dir422 directory in dir.GetDirs())
             {       
-                html.AppendFormat("<a href=\"{0}\">{1}</a><br>", directory.Name, directory.Name);                
+                html.AppendFormat("<a href=\'{0}\'>{1}</a><br>", directory.Name, directory.Name);                
             }
             html.Append("<br><br><h1>Files</h1>");
             foreach (File422 file in dir.GetFiles())
             {
                 html.AppendFormat("<a href=\"{0}\">{1}</a><br>", file.Name, file.Name);                
             }
+            // If uploading is allowed, put the uploader at the bottom
+            if (m_allowUploads)
+            {
+                html.Append(GetHREF(dir, true)); 
+                html.AppendFormat(
+                "<hr><h3 id='uploadHdr'>Upload</h3><br>" +
+                "<input id=\"uploader\" type='file' " +
+                "onchange='selectedFileChanged(this,\"{0}\")' /><hr>",
+                GetHREF(dir, true));
+            }
 
             return html.ToString();
+        }
+
+
+
+        private string GetHREF(Dir422 dir, bool something)
+        {
+            return "/files" + GetHREFHelper(dir);
+        }
+
+
+        private string GetHREFHelper(Dir422 dir)
+        {
+            if (dir.Parent != null)
+                return GetHREFHelper(dir.Parent) + "/" + dir.Name;
+            return "/" + dir.Name;
         }
 
         private void RespondWithFile(File422 file,WebRequest req)

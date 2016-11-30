@@ -24,14 +24,14 @@ namespace CS422
             UnitTests u = new UnitTests();
             u.runTests();
             */
-            //StandardFileSystem fs = StandardFileSystem.Create("C:\\Users\\lt_va\\Documents");     
+            StandardFileSystem fs = StandardFileSystem.Create("C:\\Users\\lt_va\\Documents");     
 
-            //WebServer.AddService(new FilesWebService(fs));
-            //WebServer.Start(9000, 10);
+            WebServer.AddService(new FilesWebService(fs));
+            WebServer.Start(9000, 10);
             //Thread.Sleep(10);
             //WebServer.Stop();                 
 
-            TestBigNum test = new TestBigNum();
+            //TestBigNum test = new TestBigNum();
 
             //ConcatStreamUnitTests.Test();
             //NoSeekMemoryStreamTests.Test();
@@ -48,6 +48,7 @@ namespace CS422
                 //Different if 
                 //Pow2 func - for loop, multply by itself n number of times
                 //doubleToStringTest(double.MaxValue.ToString(), "-.01999");
+
                 
                 toStringTest("-10000000000000000000000000", "-10000000000000000000000000");
                 toStringTest("10000000000000000000000000", "10000000000000000000000000");
@@ -63,7 +64,13 @@ namespace CS422
                 toStringTest("100E1", "1000");
                 toStringTest("100E2", "10000");
                 toStringTest("100E-2", "1");
+                toStringTest("100E-10", ".00000001");
+                toStringTest("100E-1", "10");
+                toStringTest("100E-1", "10");
+                toStringTest("1.79769313486232E+16", "17976931348623200");
 
+
+                additionTest("20E3", "100E-5", "20000.001");
 
 
                 /*
@@ -80,6 +87,7 @@ namespace CS422
                 divideTest("9", "3", "3");
                 divideTest("1", "-1", "-1");
                 */
+                
             }           
 
             private bool divideTest(string val1, string val2, string expectedOutput)

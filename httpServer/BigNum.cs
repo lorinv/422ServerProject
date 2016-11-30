@@ -95,7 +95,7 @@ namespace CS422
                 {
                     try
                     {
-                        _exp = Convert.ToInt32(E.Substring(1));
+                        _exp -= Convert.ToInt32(E.Substring(1)) + 1;
                     }
                     catch
                     {
@@ -107,7 +107,7 @@ namespace CS422
                 {
                     try
                     {
-                        _exp += Convert.ToInt32(E.Substring(1));
+                        _exp += Convert.ToInt32(E.Substring(1)) + 1;
                     }
                     catch
                     {
@@ -239,10 +239,11 @@ namespace CS422
             if (val[0] == '-') { neg = true; val = val.Substring(1, val.Length - 1); }
             if (_exp < 0)
             {
-                for (int j = 0; j < (_exp * -1) - val.Length; j++)
+                int length = val.Length;
+                for (int j = 0; j < (_exp * -1) - length; j++)
                     val = "0" + val;
-
-                val = val.Substring(0, (int)(val.Length + _exp)) + "." + val.Substring((int)(val.Length + _exp), val.Length - (int)(val.Length + _exp));
+            
+                val = val.Substring(0, (int)(val.Length + _exp)) + "." + val.Substring((int)(val.Length + _exp), val.Length - (int)(val.Length + _exp));                
             }
             else if (_exp > 0)
             {
@@ -308,13 +309,13 @@ namespace CS422
 
             if (lhs._exp > rhs._exp)
             {
-                exp_difference = lhs._exp - rhs._exp;                              
+                exp_difference = BigInteger.Abs(lhs._exp - rhs._exp);                              
                 for (; i < exp_difference; i++)
                 {
                     lhs._num *= 10;
                 }
             }
-            else if (lhs._exp > rhs._exp)
+            else if(lhs._exp > rhs._exp)
             {
                 exp_difference = rhs._exp - lhs._exp;                                
                 for (; i < exp_difference; i++)
@@ -324,11 +325,14 @@ namespace CS422
             }
 
             return_value._num = rhs._num + lhs._num;
+            return_value._exp = i * -1;
+            /*
             for (; i > 0; i--)
             {
                 return_value._num /= 10;
-            }
-            return_value._exp = BigInteger.Max(rhs._exp, lhs._exp);
+                
+            }*/
+            //return_value._exp = BigInteger.Max(rhs._exp, lhs._exp);
 
             return return_value;
         }
