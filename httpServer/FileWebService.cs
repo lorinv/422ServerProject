@@ -152,12 +152,12 @@ function selectedFileChanged(fileInput, urlPrefix)
 
             foreach (Dir422 directory in dir.GetDirs())
             {       
-                html.AppendFormat("<a href=\'{0}\'>{1}</a><br>", directory.Name, directory.Name);                
+                html.AppendFormat("<a href=\'{0}\'>{1}</a><br>", GetHREF(dir, true) + "/" + directory.Name, directory.Name);                 
             }
             html.Append("<br><br><h1>Files</h1>");
             foreach (File422 file in dir.GetFiles())
             {
-                html.AppendFormat("<a href=\"{0}\">{1}</a><br>", file.Name, file.Name);                
+                html.AppendFormat("<a href=\"{0}\">{1}</a><br>", GetHREF(dir, true) + "/" + file.Name, file.Name);                 
             }
             // If uploading is allowed, put the uploader at the bottom
             if (m_allowUploads)
