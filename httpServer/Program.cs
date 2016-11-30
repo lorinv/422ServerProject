@@ -24,7 +24,7 @@ namespace CS422
             UnitTests u = new UnitTests();
             u.runTests();
             */
-            StandardFileSystem fs = StandardFileSystem.Create("C:\\Users\\lt_va\\Documents\\Downloads");
+            StandardFileSystem fs = StandardFileSystem.Create("C:\\Users\\lt_va\\Documents");
             //StandardFileSystem fs = StandardFileSystem.Create("C:\\Users\\lt_va\\Documents");
             WebServer.AddService(new FilesWebService(fs));
             WebServer.Start(9000, 10);

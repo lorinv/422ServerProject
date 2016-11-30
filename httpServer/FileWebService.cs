@@ -20,23 +20,30 @@ namespace CS422
             File422 file = dir.CreateFile(req.URI.Split('/', '\\').Last());
             Stream outputStream = file.OpenReadWrite();
             Stream inputStream = req._networkStream;
-            
+
+            inputStream.ReadTimeout = 1000;
             int BUFFER_SIZE = 8000;
             int bytesRead = 0;
             byte[] bytes = new byte[BUFFER_SIZE];
-            bytesRead = inputStream.Read(bytes, 0, bytes.Length);            
+            try
+            {
+                bytesRead = inputStream.Read(bytes, 0, bytes.Length);
+            }
+            catch { }
 
             while (bytesRead != 0)
             {
                 // Translate data bytes to a ASCII string.
                 outputStream.Write(bytes, 0, bytesRead);
                 bytes = new byte[BUFFER_SIZE];
-                bytesRead = inputStream.Read(bytes, 0, bytes.Length);                                
-            }
+                try { bytesRead = inputStream.Read(bytes, 0, bytes.Length); }
+                catch { break; }                
+                Console.WriteLine(bytesRead.ToString());                         
+            }            
 
+            req.WriteHTMLResponse("Hello");
             outputStream.Close();
-            inputStream.Close();
-            req.WriteHTMLResponse("");
+            inputStream.Close();                                                       
         }
     
         public override void Handler(WebRequest req)
