@@ -131,11 +131,15 @@ namespace CS422
                 data += System.Text.Encoding.ASCII.GetString(bytes, 0, bytesRead);
 
                 // Return False if you have read in more than three bytes but not seen "GET"
-                if (total_read >= 3 && !(data.Contains("GET") || data.Contains("POST")))
+                if (total_read >= 3 && !(data.Contains("GET") || data.Contains("PUT")))
                 {
                     Console.WriteLine("Invalid Request.");
                     client.Close();
                     return null;
+                }
+                else
+                {
+
                 }
 
                 // Return False if you have not seen "HTTP/1.1"

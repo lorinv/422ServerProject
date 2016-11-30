@@ -19,11 +19,11 @@ namespace CS422
         private string _version;
         private Dictionary<String, String> _headers;
         private Stream _bodyStream;
-        private Stream _networkStream;
+        public Stream _networkStream;
         private bool _queryLength;
         public bool isValid = true;
 
-        Stream bodyStream;
+        public Stream bodyStream;
 
         public string Method
         {
@@ -57,7 +57,11 @@ namespace CS422
 
         private void parseRequest(string request)
         {
+            string body = request.Substring(request.IndexOf("\r\n\r\n") + 4);
             string[] requestSplit = request.Split('\n', '\r');
+            //TODO: How do we properlyy read in the body?
+            //Do we use the bodyStream? Etc
+
             string[] split = requestSplit[0].Split(' ');
             if (split.Length >= 3)
             {
@@ -73,6 +77,8 @@ namespace CS422
 
             for (int i = 1; i < requestSplit.Length - 1; i += 1)
                 _headers[requestSplit[i].Split(' ')[0]] = String.Join(" ", requestSplit[i].Split(' ').Skip(1));
+
+
         }
 
         public WebRequest(string method, string uri, string version, Dictionary<String, String> headers, Stream bodyStream)

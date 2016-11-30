@@ -152,9 +152,11 @@ namespace CS422
                 {
                     try
                     {
-                        Directory.CreateDirectory(m_path + "/" + name);
-                        StdFSDir newDir = new StdFSDir(m_path + "/" + name, this);
-                        return newDir;
+                    //Directory.CreateDirectory(m_path + "/" + name); //Linux
+                    Directory.CreateDirectory(m_path + "\\" + name); //Windows
+                    StdFSDir newDir = new StdFSDir(m_path + "/" + name, this); //Windows
+                    //StdFSDir newDir = new StdFSDir(m_path + "/" + name, this); //Linux
+                    return newDir;
                     }
                     catch { return null; }                    
                 }                
@@ -170,9 +172,11 @@ namespace CS422
                 
                 try
                 {
-                    Stream file = File.Create(m_path + "/" + name);
+                    Stream file = File.Create(m_path + "\\" + name); //Windows
+                    //Stream file = File.Create(m_path + "/" + name); //Linux
                     file.Close();
-                    StdFSFile newFile = new StdFSFile(m_path + "/" + name, this);
+                    StdFSFile newFile = new StdFSFile(m_path + "\\" + name, this); //Windows
+                    //StdFSFile newFile = new StdFSFile(m_path + "/" + name, this); //Linux
                     return newFile;
                 }
                 catch { return null; }
@@ -218,7 +222,8 @@ namespace CS422
 
                 if (ContainsFile(name, false))
                 {
-                    StdFSFile file = new StdFSFile(m_path + "/" + name, this);
+                    //StdFSFile file = new StdFSFile(m_path + "/" + name, this); //Linux
+                    StdFSFile file = new StdFSFile(m_path + "\\" + name, this); //Windows
                     return file;
                 }
                 else { return null; }                        

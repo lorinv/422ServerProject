@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 
 namespace CS422
 {
@@ -13,6 +14,30 @@ namespace CS422
             _fs = fs;
             m_allowUploads = true;
         }
+
+        public void HandlePut(WebRequest req, Dir422 dir)
+        {
+            File422 file = dir.CreateFile(req.URI.Split('/', '\\').Last());
+            Stream outputStream = file.OpenReadWrite();
+            Stream inputStream = req._networkStream;
+            
+            int BUFFER_SIZE = 8000;
+            int bytesRead = 0;
+            byte[] bytes = new byte[BUFFER_SIZE];
+            bytesRead = inputStream.Read(bytes, 0, bytes.Length);            
+
+            while (bytesRead != 0)
+            {
+                // Translate data bytes to a ASCII string.
+                outputStream.Write(bytes, 0, bytesRead);
+                bytes = new byte[BUFFER_SIZE];
+                bytesRead = inputStream.Read(bytes, 0, bytes.Length);                                
+            }
+
+            outputStream.Close();
+            inputStream.Close();
+            req.WriteHTMLResponse("");
+        }
     
         public override void Handler(WebRequest req)
         {
@@ -23,13 +48,13 @@ namespace CS422
             }
 
             //percent-decode URI
-            string uri = req.URI;                  
+            string uri = req.URI;                              
 
             string[] pieces = req.URI.Substring(ServiceURI.Length).Split('/','\\');
             Dir422 dir = _fs.GetRoot();        
             //Grabs all the parts but the last part, which could be a file or a dir
             string piece = "";
-            for (int i = 0; i < pieces.Length - 1; i++)
+            for (int i = 1; i < pieces.Length - 1; i++)
             {
                 piece = pieces[i];
                 if (piece.Contains("%20")) piece = piece.Replace("%20", " ");
@@ -46,19 +71,26 @@ namespace CS422
 
             //Check if the last part is a file or a directory
             piece = pieces[pieces.Length - 1];
-            if (piece.Contains("%20")) piece = piece.Replace("%20", " ");
+            if (piece.Contains("%20")) piece = piece.Replace("%20", " ");            
             File422 file = dir.GetFile(piece); //TODO: This is returning Null and is not supposed to.
+            if (file == null && req.Method == "PUT")
+            {
+                HandlePut(req, dir);
+                return;
+            }
             if (file != null)
             {
                 //If it's a file, then return the file.
                 Console.WriteLine("It's a file!");
+
                 RespondWithFile(file, req);
             }
             else
             {
                 piece = pieces[pieces.Length - 1];
                 if (piece.Contains("%20")) piece = piece.Replace("%20", " ");
-                dir = dir.GetDir(piece);
+                if (piece != "")
+                    dir = dir.GetDir(piece);
 
                 if (dir != null)
                 {
